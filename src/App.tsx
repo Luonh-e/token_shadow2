@@ -25,7 +25,6 @@ function App() {
 
         const contract = new ethers.Contract(contractAddress, TokenABI, signer);
 
-        const name = await contract.name();
         const symbol = await contract.symbol();
         const wallet = await signer.getAddress();
 
