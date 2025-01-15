@@ -6,7 +6,6 @@ const contractAddress = "0x69a155ddd740167Ff5022A96a6Ff98af0E6Cb0Aa";
 
 function App() {
   const [walletAddress, setWalletAddress] = useState("");
-  const [tokenName, setTokenName] = useState("");
   const [tokenSymbol, setTokenSymbol] = useState("");
   const [balance, setBalance] = useState("");
   const [recipient, setRecipient] = useState("");
@@ -31,7 +30,6 @@ function App() {
         const wallet = await signer.getAddress();
 
         setWalletAddress(wallet);
-        setTokenName(name);
         setTokenSymbol(symbol);
       } else {
         throw new Error("MetaMask chưa được cài đặt!");
