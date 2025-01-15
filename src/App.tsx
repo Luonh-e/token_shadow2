@@ -19,7 +19,6 @@ function App() {
     try {
       if (typeof window.ethereum !== "undefined") {
         const provider = new ethers.BrowserProvider(window.ethereum);
-        const accounts = await provider.send("eth_requestAccounts", []);
         const signer = await provider.getSigner();
         const contract = new ethers.Contract(contractAddress, TokenABI, signer);
 
