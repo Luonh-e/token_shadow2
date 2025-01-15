@@ -10,6 +10,7 @@ function App() {
   const [balance, setBalance] = useState("");
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
+  const [isOwner, setIsOwner] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,16 +21,15 @@ function App() {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const accounts = await provider.send("eth_requestAccounts", []);
         const signer = await provider.getSigner();
-
-        console.log(accounts);
-
         const contract = new ethers.Contract(contractAddress, TokenABI, signer);
 
         const symbol = await contract.symbol();
         const wallet = await signer.getAddress();
+        const owner = await contract.owner();
 
         setWalletAddress(wallet);
         setTokenSymbol(symbol);
+        setIsOwner(owner.toLowerCase() === wallet.toLowerCase());
       } else {
         throw new Error("MetaMask chưa được cài đặt!");
       }
@@ -89,11 +89,68 @@ function App() {
     }
   }
 
+  async function burnTokens(amount: any) {
+    setError(null);
+    setIsLoading(true);
+    try {
+      if (!amount) {
+        throw new Error("Vui lòng nhập số lượng token để hủy.");
+      }
+
+      if (typeof window.ethereum !== "undefined") {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const contract = new ethers.Contract(contractAddress, TokenABI, signer);
+
+        const decimals = 18;
+        const value = ethers.parseUnits(amount, decimals);
+
+        const tx = await contract.burn(value);
+        await tx.wait();
+
+        alert("Đã hủy token thành công!");
+        checkBalance();
+        setAmount("");
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function initTokens(amount: any) {
+    setError(null);
+    setIsLoading(true);
+    try {
+      if (!amount) {
+        throw new Error("Vui lòng nhập số lượng token để khởi tạo.");
+      }
+
+      if (typeof window.ethereum !== "undefined") {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const contract = new ethers.Contract(contractAddress, TokenABI, signer);
+
+        const decimals = 18;
+        const value = ethers.parseUnits(amount, decimals);
+
+        const tx = await contract.mint(walletAddress, value);
+        await tx.wait();
+
+        alert("Đã khởi tạo token thành công!");
+        checkBalance();
+        setAmount("");
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
-    <div
-      className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-700 to-black
- bg-gray-100 flex items-center justify-center"
-    >
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-700 to-black flex items-center justify-center">
       <div className="bg-gray-500 p-6 rounded-lg shadow-lg w-full max-w-md">
         <h1 className="text-2xl font-bold mb-4">Shadow2 token - SDT</h1>
         {error && <p className="text-red-500 mb-4">Lỗi: {error}</p>}
@@ -143,6 +200,46 @@ function App() {
           disabled={isLoading}
         >
           {isLoading ? "Đang xử lý..." : "Chuyển"}
+        </button>
+        <h3 className="mt-6 text-lg font-semibold">Burn Token</h3>
+        <input
+          type="number"
+          placeholder="Số lượng token để hủy"
+          disabled={!isOwner}
+          className={`w-full p-2 mt-2 border rounded ${
+            isOwner ? "bg-white" : "bg-gray-300 cursor-not-allowed"
+          }`}
+        />
+        <button
+          disabled={!isOwner || isLoading}
+          onClick={() => burnTokens(amount)}
+          className={`mt-4 px-4 py-2 rounded ${
+            isOwner
+              ? "bg-red-500 text-white hover:bg-red-600"
+              : "bg-red-500 text-white opacity-50 cursor-not-allowed"
+          }`}
+        >
+          {isLoading ? "Đang xử lý..." : "Hủy Token"}
+        </button>
+        <h3 className="mt-6 text-lg font-semibold">Tạo thêm Token</h3>
+        <input
+          type="number"
+          placeholder="Số lượng token để khởi tạo"
+          disabled={!isOwner}
+          className={`w-full p-2 mt-2 border rounded ${
+            isOwner ? "bg-white" : "bg-gray-300 cursor-not-allowed"
+          }`}
+        />
+        <button
+          disabled={!isOwner || isLoading}
+          onClick={() => initTokens(amount)}
+          className={`mt-4 px-4 py-2 rounded ${
+            isOwner
+              ? "bg-yellow-500 text-white hover:bg-yellow-600"
+              : "bg-yellow-500 text-white opacity-50 cursor-not-allowed"
+          }`}
+        >
+          {isLoading ? "Đang xử lý..." : "Khởi tạo Token"}
         </button>
       </div>
     </div>
